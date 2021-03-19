@@ -26,8 +26,8 @@ numberOfFrames = 3000;
 endpt1 = zeros(numberOfFrames,2);
 endpt2 = zeros(numberOfFrames,2);
 count = 0;
-
-
+G = 20;
+Td_int = 1000;
 k = 1;
 while(true)
     
@@ -49,7 +49,8 @@ while(true)
         % define the device (either Arduino or Seeeduino) serial communication
         % Timeout is defined so that it wait untils the mentioned time to
         % read from serial port 
-        device = serialport("COM10",9600,"Timeout",30);
+        device = serialport('COM10',9600,"Timeout",30);
+        flush(device);
         
         % Instantiate a video reader object for this video.
         cam = webcam;
@@ -57,11 +58,11 @@ while(true)
         end
     
         thisFrame = cam.snapshot;
-        thisFrame = imresize(thisFrame,[270,480]);
-        newim = createMaskInchworm2(thisFrame);
+        thisFrame = imresize(thisFrame,[640,480]);
+        newim = createMask_blue(thisFrame);
         
         % Filter out small blobs
-        newim = bwareaopen(newim, 10);
+        newim = bwareaopen(newim, 80);
         % Fill in holes
         newim = imfill(newim, 'holes');
         hImage=subplot(3, 1, 1);
@@ -76,116 +77,126 @@ while(true)
         title('Colored Blob Mask', 'FontSize', fontSize);
         drawnow;
         
-        [labeledImage, numberOfRegions] = bwlabel(newim);
-        if numberOfRegions == 2
-		stats = regionprops(labeledImage, 'BoundingBox', 'Centroid');
-        count = count +1;
-		% Delete old texts and rectangles
-		if exist('hRect', 'var')
-			delete(hRect);
-		end
-		if exist('hText', 'var')
-			delete(hText);
-        end
-        end
+        flush(device);
+        % reads the gait cycle number as a char value
+        m_char = readline(device);
+        % converts to double
+        m = str2double(m_char);
         
-        % Display the original image again.
-		subplot(3, 1, 3); % Switch to original image.
-		hImage=subplot(3, 1, 3);
-		imshow(thisFrame);
-		axis on;
-		hold on;
-		caption = sprintf('%d blobs found in frame #%d 0f %d', numberOfRegions, k, numberOfFrames);
-		title(caption, 'FontSize', fontSize);
-		drawnow;
         
-        if count == 1
-            for r = 1 : numberOfRegions
-			% Find location for this blob.
-			thisBB = stats(r).BoundingBox;
-			thisCentroid = stats(r).Centroid;
-            
-                if r==1
-                    centroid1(count,:) = thisCentroid;
-                end
-
-                if r==2
-                    centroid2(count,:) = thisCentroid;
-                end
-
+        if count == 0 || m>=3
+        
+            [labeledImage, numberOfRegions] = bwlabel(newim);
+            if numberOfRegions == 2
+            stats = regionprops(labeledImage, 'BoundingBox', 'Centroid');
+            count = count +1;
+            % Delete old texts and rectangles
+            if exist('hRect', 'var')
+                delete(hRect);
             end
-            
-                X1 = [centroid1(count,:);centroid2(count,:)];
-                d1 = pdist(X1,'euclidean');
-                pix2mm = 89/d1;
+            if exist('hText', 'var')
+                delete(hText);
+            end
+            end
         end
-            
-    % reads the gait cycle number as a char value
-    m_char = readline(device);
-    % converts to double
-    m = str2double(m_char);
-    
-    if m>=2
-            
-        if count~=1
-            for r = 1 : numberOfRegions
-			% Find location for this blob.
-			thisBB = stats(r).BoundingBox;
-			thisCentroid = stats(r).Centroid;
-            thisCentroid = [thisCentroid(1) thisCentroid(2)]*pix2mm;
-      
-                if r==1
-                    endpt1(count,:) = thisCentroid;
-                end
 
-                if r==2
-                    endpt2(count,:) = thisCentroid;
-                end
+            % Display the original image again.
+            subplot(3, 1, 3); % Switch to original image.
+            hImage=subplot(3, 1, 3);
+            imshow(thisFrame);
+            axis on;
+            hold on;
+            caption = sprintf('%d blobs found in frame #%d 0f %d', numberOfRegions, k, numberOfFrames);
+            title(caption, 'FontSize', fontSize);
+            drawnow;
 
-            end
-            
-                    if endpt1(count,1)<endpt2(count,2)
-                        
-                        centroid1(count,:) = endpt1(count,:);
-                        centroid2(count,:) = endpt2(count,:);
-                        
+            if count == 1
+                for r = 1 : numberOfRegions
+                % Find location for this blob.
+                thisBB = stats(r).BoundingBox;
+                thisCentroid = stats(r).Centroid;
+
+                    if r==1
+                        centroid1(count,:) = thisCentroid;
                     end
 
-            
-                    if endpt2(count,1)<endpt1(count,2)
-                        
-                        centroid1(count,:) = endpt2(count,:);
-                        centroid2(count,:) = endpt1(count,:);
-                        
+                    if r==2
+                        centroid2(count,:) = thisCentroid;
                     end
-                    
-        end
-        
-        % defines new T_d as double, rounded to make sure it is an int
-        Td_int = round(Td_int + G*(centroid1(count-1,1) - centroid1(count-2,1)));
-        % converts double to string 
-        Td = num2str(Td_int);
-        % writes string to serial port
-        writeline(device,Td);
 
-        
-    end
-            
-            hRect(r) = rectangle('Position', thisBB, 'EdgeColor', 'r', 'LineWidth', 2);
-			hSpot = plot(thisCentroid(1), thisCentroid(2), 'y+', 'MarkerSize', 8, 'LineWidth', 2);
-			hText(r) = text(thisBB(1), thisBB(2)-20, strcat('X: ', num2str(round(thisCentroid(1))), '    Y: ', num2str(round(thisCentroid(2)))));
-			set(hText(r), 'FontName', 'Arial', 'FontWeight', 'bold', 'FontSize', 8, 'Color', 'yellow');
-		
-		hold off
-		drawnow;
-        
-        if get(hCheckbox, 'Value')
-		% Finish now checkbox is checked.
-		msgbox('Done with processing.');
-		return;
+                end
+
+                    X1 = [centroid1(count,:);centroid2(count,:)];
+                    d1 = pdist(X1,'euclidean');
+                    pix2mm = 89/d1;
+            end
+
+%         % reads the gait cycle number as a char value
+%         m_char = readline(device);
+%         % converts to double
+%         m = str2double(m_char);
+
+        if m>=3
+
+            if count~=1
+                for r = 1 : numberOfRegions
+                % Find location for this blob.
+                thisBB = stats(r).BoundingBox;
+                thisCentroid = stats(r).Centroid;
+                thisCentroid = [thisCentroid(1) thisCentroid(2)];
+
+                    if r==1
+                        endpt1(count,:) = thisCentroid;
+                    end
+
+                    if r==2
+                        endpt2(count,:) = thisCentroid;
+                    end
+
+                end
+
+                        if endpt1(count,1)<endpt2(count,1)
+
+                            centroid1(count,:) = endpt1(count,:);
+                            centroid2(count,:) = endpt2(count,:);
+
+                        end
+
+
+                        if endpt2(count,1)<endpt1(count,1)
+
+                            centroid1(count,:) = endpt2(count,:);
+                            centroid2(count,:) = endpt1(count,:);
+
+                        end
+
+            end
+
+            % defines new T_d as double, rounded to make sure it is an int
+            Td_int = round(Td_int + G*(centroid1(count,1) - centroid1(count-1,1)));
+            % converts double to string 
+            Td = num2str(Td_int);
+            % writes string to serial port
+            writeline(device,Td);
+
+
         end
+
+                hRect(r) = rectangle('Position', thisBB, 'EdgeColor', 'r', 'LineWidth', 2);
+                hSpot = plot(thisCentroid(1), thisCentroid(2), 'y+', 'MarkerSize', 8, 'LineWidth', 2);
+                hText(r) = text(thisBB(1), thisBB(2)-20, strcat('X: ', num2str(round(thisCentroid(1))), '    Y: ', num2str(round(thisCentroid(2)))));
+                set(hText(r), 'FontName', 'Arial', 'FontWeight', 'bold', 'FontSize', 8, 'Color', 'yellow');
+
+            hold off
+            drawnow;
+
+            if get(hCheckbox, 'Value')
+            % Finish now checkbox is checked.
+            msgbox('Done with processing.');
+            return;
+            end
 
 k = k+1;
-flush(device); % Clears buffer
+% flush(device); % Clears buffer
 end
                 
