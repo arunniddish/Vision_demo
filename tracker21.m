@@ -6,6 +6,7 @@
 %%% Live tracking of Caitlin Inchworm for phase delay
 %%% This tracking is done on only 2 points.
 %%% Reading and writing data to serial port
+%%% Records the plot and makes a video
 
 % Demo to track any color based on 'createMask' function.  Finds and annotates centroid and bounding box of any colored blobs.
 % Modify thresholds to detect different colors. In this case we are finding
@@ -54,15 +55,19 @@ while(true)
         
         % Instantiate a video reader object for this video.
         cam = webcam;
+        
+        %Initializing video for video writing
+         vwrite = VideoWriter('gcfcaptureV4','MPEG-4');
+         open(vwrite);
            
         end
     
         thisFrame = cam.snapshot;
         thisFrame = imresize(thisFrame,[640,480]);
-        newim = createMask_blue(thisFrame);
+        newim = createMaskInchWormTdelay(thisFrame);
         
         % Filter out small blobs
-        newim = bwareaopen(newim, 80);
+        newim = bwareaopen(newim, 10);
         % Fill in holes
         newim = imfill(newim, 'holes');
         hImage=subplot(3, 1, 1);
@@ -186,17 +191,24 @@ while(true)
                 hSpot = plot(thisCentroid(1), thisCentroid(2), 'y+', 'MarkerSize', 8, 'LineWidth', 2);
                 hText(r) = text(thisBB(1), thisBB(2)-20, strcat('X: ', num2str(round(thisCentroid(1))), '    Y: ', num2str(round(thisCentroid(2)))));
                 set(hText(r), 'FontName', 'Arial', 'FontWeight', 'bold', 'FontSize', 8, 'Color', 'yellow');
+                if exist(Td)
+                            Td_text = text(300,300,strcat('Td: ', num2str(round(Td))));
+                            set(Td_text, 'FontName', 'Arial', 'FontWeight', 'bold', 'FontSize', 15, 'Color', 'white');
+                end
+                
+                hold off
+                drawnow;
+                frame = getframe(gcf);
+                writeVideo(vwrite,frame);
 
-            hold off
-            drawnow;
-
-            if get(hCheckbox, 'Value')
-            % Finish now checkbox is checked.
-            msgbox('Done with processing.');
-            return;
-            end
+                if get(hCheckbox, 'Value')
+                % Finish now checkbox is checked.
+                msgbox('Done with processing.');
+                return;
+                end
 
 k = k+1;
 % flush(device); % Clears buffer
 end
+close(vwrite);
                 
