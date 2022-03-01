@@ -1,11 +1,11 @@
 # Vision
-All .mat files consists of tracking data.\
-Capture rate at 30fps.\
+All .mat files consists of tracking data.
+Capture rate at 30fps.
 
-The files are 'n x 48' matrix.\
-n --> Number of frames.\
+The files are 'n x 48' matrix.
+n --> Number of frames.
 
-Matlab commands used to structure the data:\
+Matlab commands used to structure the data:
 
 theta_G(k,:) = reshape(Rot_G,[1,9]);   % Rotation matrix w.r.t 1st frame
 trans_G(k,:) = T_G';                   % Translation matrix w.r.t 1st frame
