@@ -1,4 +1,4 @@
-# Vision\
+# Vision
 All .mat files consists of tracking data.\
 Capture rate at 30fps.
 
