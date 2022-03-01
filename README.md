@@ -17,16 +17,16 @@ all_pt = cat(2,centroid1,centroid2,centroid3,centroid4,centroid5,centroid6,...
 They are structured as follows:
 
 Columns             Respective Datas
-1  to 3  (1x3)      Marker 1 [x,y,z]
-4  to 6  (1x3)      Marker 2 [x,y,z]
-7  to 9  (1x3)      Marker 3 [x,y,z]
-10 to 12 (1x3)      Marker 4 [x,y,z]
-13 to 15 (1x3)      Marker 5 [x,y,z]
-16 to 18 (1x3)      Marker 6 [x,y,z]
-19 to 21 (1x3)      Marker 7 [x,y,z]
-22 to 24 (1x3)      Marker 8 [x,y,z]
-25 to 33 (1x9)      Rotation matrix Intermediate frames [Reshaped from 3x3 to 1x9]
-34 to 36 (1x3)      Translation Matrix Intermediate frames [[x,y,z]Reshaped from 3x1 to 1x3] 
+1  to 3  (1x3)      Marker 1 [x,y,z]\
+4  to 6  (1x3)      Marker 2 [x,y,z]\
+7  to 9  (1x3)      Marker 3 [x,y,z]\
+10 to 12 (1x3)      Marker 4 [x,y,z]\
+13 to 15 (1x3)      Marker 5 [x,y,z]\
+16 to 18 (1x3)      Marker 6 [x,y,z]\
+19 to 21 (1x3)      Marker 7 [x,y,z]\
+22 to 24 (1x3)      Marker 8 [x,y,z]\
+25 to 33 (1x9)      Rotation matrix Intermediate frames [Reshaped from 3x3 to 1x9]\
+34 to 36 (1x3)      Translation Matrix Intermediate frames [[x,y,z]Reshaped from 3x1 to 1x3]\ 
 37 to 45 (1x9)      Rotation matrix Global frame [Reshaped from 3x3 to 1x9]
 46 to 48 (1x3)      Translation Matrix Global frame [[x,y,z]Reshaped from 3x1 to 1x3]
 
