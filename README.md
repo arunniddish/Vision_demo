@@ -28,7 +28,7 @@ Columns             Respective Datas\
 25 to 33 (1x9)      Rotation matrix Intermediate frames [Reshaped from 3x3 to 1x9]\
 34 to 36 (1x3)      Translation Matrix Intermediate frames [[x,y,z]Reshaped from 3x1 to 1x3]\ 
 37 to 45 (1x9)      Rotation matrix Global frame [Reshaped from 3x3 to 1x9]\
-46 to 48 (1x3)      Translation Matrix Global frame [[x,y,z]Reshaped from 3x1 to 1x3]
+46 to 48 (1x3)      Translation Matrix Global frame [[x,y,z]Reshaped from 3x1 to 1x3]\
 
 Pixel to mm conversion: \
 1 pixel(x-axis) = 2.3921 mm  (630x400)\
