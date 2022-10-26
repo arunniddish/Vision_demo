@@ -41,10 +41,10 @@ classdef OfflineTracking
                 newim = createMaskCarpetBlue(thisFrame);
                 newim = bwareaopen(newim,20);
                 newim = imfill(newim, 'holes');
-%                 axis on;  % To be changed
+
                 [labeledImage, numberOfRegions] = bwlabel(newim);
+                
                 count = 0;
-%                 cent = [];
                 obj.cent = zeros(numberOfRegions,2);
 
                 stats = regionprops(labeledImage, 'BoundingBox','Centroid','Area','EquivDiameter');
@@ -62,25 +62,32 @@ classdef OfflineTracking
                     obj.P0 = obj.cent;
                     obj.PrevPt = obj.cent;
                     obj.centroids = data_logging(obj,k);
+                    plot(obj,thisFrame,count,k);
                   end
 
                   if k ~= 1
 
-                     obj.centroids = nearest_neighbor(obj,count);
-                     obj.centroids = data_logging(obj,count);
-%                      [~,~,theta(k,:),trans(k,:)] = pose_estimation(obj.CurrPt,obj.PrevPt,k);
-                     [Rot,T] = pose_estimation(obj,obj.centroids,obj.PrevPt,k);
-%                      theta(k,:) = reshape(Rot,[1,9]);
-%                      trans(k,:) = T';
-%                      [~,~,theta_G(k,:),trans_G(k,:)] = pose_estimation(obj.P0,obj.PrevPt,k);
-                     [Rot,T] = pose_estimation(obj.P0,obj.PrevPt,k);
-%                      theta_G(k,:) = reshape(Rot,[1,9]);
-%                      trans_G(k,:) = T';
+                     obj.CurrPt = nearest_neighbor(obj,count);                    
+
+                     [Rot,T] = pose_estimation(obj,obj.CurrPt,obj.PrevPt,k);
+                     theta(k,:) = reshape(Rot,[1,9]);
+                     trans(k,:) = T';
+
+                     [Rot,T] = pose_estimation(obj,obj.P0,obj.CurrPt,k);
+                     theta_G(k,:) = reshape(Rot,[1,9]);
+                     trans_G(k,:) = T';
+
                      obj.PrevPt = obj.CurrPt;
+                     obj.centroids = data_logging(obj,k);
+
+                     plot(obj,thisFrame,count,k);
+
                   end
                   
             end
+
             tracking_data = cat(2,obj.centroids,theta,trans,theta_G,trans_G);
+            close(obj.vwrite);
         end
 
         function centroids = nearest_neighbor(obj,count)      %Change the name of the centroid ->
@@ -124,6 +131,7 @@ classdef OfflineTracking
             if(val~=0)
                 centroids = obj.CurrPt;       %Change the name of the centroid ->
             end
+
         end 
 
         function centroids = occlusion(obj,index)   %Change the name of the centroid ->
@@ -145,31 +153,38 @@ classdef OfflineTracking
         end
 
         function centroids = data_logging(obj,k)
+
             for i = 1:obj.number_of_markers
-                centroids(k,(3*i)-2:(3*i)) = obj.PrevPt(i,:);
+                obj.centroids(k,(3*i)-2:(3*i)) = obj.PrevPt(i,:);
+                centroids = obj.centroids;
             end
+
         end
 
-        function [Rot,T,theta(k,:),trans(k,:)] = pose_estimation(obj,A,B,k)
-%         function [Rot,T] = pose_estimation(obj,A,B,k)
+        function [Rot,T,theta,trans] = pose_estimation(obj,A,B,k)
+
             [Rot,T] = rigid_transform_3D(A',B');  % SE2 w.r.t previous frame
-            theta(k,:) = reshape(Rot,[1,9]);   % Changed ANM
-            trans(k,:) = T';
+%             theta(k,:) = reshape(Rot,[1,9]);   % Changed ANM
+%             trans(k,:) = T';
+
         end
 
-        function plot(obj)
+        function plot(obj,thisFrame,count,k)
+
             figure(10)
             imshow(thisFrame)
             set(gcf, 'Position',  [100, 100, 1000, 1000])
             hold on
-            plot(obj.PrevPt(:,1),obj.PrevPt(:,2),'g*','LineWidth',0.5,'MarkerSize',2)
+            plot(obj.PrevPt(:,1),1080-obj.PrevPt(:,2),'g*','LineWidth',0.5,'MarkerSize',2)
             caption = sprintf('%d blobs found in frame #%d 0f %d', count, k, obj.numberOfFrames);
             title(caption, 'FontSize', 20);
             axis on;
             hold off
             pframe = getframe(gcf);
             writeVideo(obj.vwrite,pframe);
-        end
-    
+
+        end  
+
     end
+
 end
