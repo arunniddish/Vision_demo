@@ -21,6 +21,3 @@ tracker_obj = OfflineTracking(params);
 
 % Call tracking function 
 output_data =  tracker_obj.tracking();
-
-
-
