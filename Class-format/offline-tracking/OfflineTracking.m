@@ -41,10 +41,10 @@ classdef OfflineTracking
                 newim = createMaskCarpetBlue(thisFrame);
                 newim = bwareaopen(newim,20);
                 newim = imfill(newim, 'holes');
-                %                 axis on;  % To be changed
+
                 [labeledImage, numberOfRegions] = bwlabel(newim);
                 count = 0;
-                %                 cent = [];
+   
                 obj.cent = zeros(numberOfRegions,2);
                 
                 stats = regionprops(labeledImage, 'BoundingBox','Centroid','Area','EquivDiameter');
@@ -68,15 +68,16 @@ classdef OfflineTracking
                     
                     obj.centroids = nearest_neighbor(obj,count);
                     obj.centroids = data_logging(obj,count);
-                    %                      [~,~,theta(k,:),trans(k,:)] = pose_estimation(obj.CurrPt,obj.PrevPt,k);
-                    [Rot,T] = pose_estimation(obj,obj.centroids,obj.PrevPt,k);
-                    %                      theta(k,:) = reshape(Rot,[1,9]);
-                    %                      trans(k,:) = T';
-                    %                      [~,~,theta_G(k,:),trans_G(k,:)] = pose_estimation(obj.P0,obj.PrevPt,k);
-                    [Rot,T] = pose_estimation(obj.P0,obj.PrevPt,k);
-                    %                      theta_G(k,:) = reshape(Rot,[1,9]);
-                    %                      trans_G(k,:) = T';
+                    
+                    [Rot,T] = pose_estimation(obj,obj.CurrPt,obj.PrevPt,k);
+                    theta(k,:) = reshape(Rot,[1,9]);
+                    trans(k,:) = T';
+
+                    [Rot,T] = pose_estimation(obj.P0,obj.CurrPt,k);
+                    theta_G(k,:) = reshape(Rot,[1,9]);
+                    trans_G(k,:) = T';
                     obj.PrevPt = obj.CurrPt;
+                    plot(obj,count,k);
                 end
                 
             end
@@ -150,19 +151,19 @@ classdef OfflineTracking
             end
         end
         
-        function [Rot,T,theta,trans] = pose_estimation(obj,A,B,k)
-            %         function [Rot,T] = pose_estimation(obj,A,B,k)
+%         function [Rot,T,theta,trans] = pose_estimation(obj,A,B,k)
+        function [Rot,T] = pose_estimation(obj,A,B,k)
             [Rot,T] = rigid_transform_3D(A',B');  % SE2 w.r.t previous frame
             theta(k,:) = reshape(Rot,[1,9]);   % Changed ANM
             trans(k,:) = T';
         end
         
-        function plot(obj)
+        function plot(obj,count,k)
             figure(10)
             imshow(thisFrame)
             set(gcf, 'Position',  [100, 100, 1000, 1000])
             hold on
-            plot(obj.PrevPt(:,1),obj.PrevPt(:,2),'g*','LineWidth',0.5,'MarkerSize',2)
+            plot(obj.PrevPt(:,1),1080-obj.PrevPt(:,2),'g*','LineWidth',0.5,'MarkerSize',2)
             caption = sprintf('%d blobs found in frame #%d 0f %d', count, k, obj.numberOfFrames);
             title(caption, 'FontSize', 20);
             axis on;
